@@ -58,7 +58,7 @@ func init() {
 	globals.SecureServerAccount = nex.NewAccount(types.NewPID(2), "Quazal Rendez-Vous", globals.KerberosPassword)
 
 	if strings.TrimSpace(aesKey) == "" {
-		globals.Logger.Error("PN_MPFF_AES_KEY environment variable not set")
+		globals.Logger.Error("PN_MHG_AES_KEY environment variable not set")
 		os.Exit(0)
 	} else {
 		globals.AESKey, err = hex.DecodeString(aesKey)
