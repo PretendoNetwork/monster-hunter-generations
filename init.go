@@ -2,23 +2,17 @@ package main
 
 import (
 	"crypto/rand"
-	"encoding/hex"
-	"fmt"
 	"os"
 	"strconv"
 	"strings"
 
-	pb_account "github.com/PretendoNetwork/grpc-go/account"
-	"github.com/PretendoNetwork/nex-go/v2"
-	"github.com/PretendoNetwork/nex-go/v2/types"
-	"github.com/PretendoNetwork/plogger-go"
-	"github.com/joho/godotenv"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/metadata"
-
 	"github.com/PretendoNetwork/monster-hunter-generations/database"
 	"github.com/PretendoNetwork/monster-hunter-generations/globals"
+	"github.com/PretendoNetwork/nex-go/v2"
+	"github.com/PretendoNetwork/nex-go/v2/types"
+	common_globals "github.com/PretendoNetwork/nex-protocols-common-go/v2/globals"
+	"github.com/PretendoNetwork/plogger-go"
+	"github.com/joho/godotenv"
 )
 
 func init() {
@@ -32,7 +26,6 @@ func init() {
 	}
 
 	postgresURI := os.Getenv("PN_MHG_POSTGRES_URI")
-	aesKey := os.Getenv("PN_MHG_AES_KEY")
 	authenticationServerPort := os.Getenv("PN_MHG_AUTHENTICATION_SERVER_PORT")
 	secureServerHost := os.Getenv("PN_MHG_SECURE_SERVER_HOST")
 	secureServerPort := os.Getenv("PN_MHG_SECURE_SERVER_PORT")
@@ -54,19 +47,8 @@ func init() {
 
 	globals.KerberosPassword = string(kerberosPassword)
 
-	globals.AuthenticationServerAccount = nex.NewAccount(types.NewPID(1), "Quazal Authentication", globals.KerberosPassword)
-	globals.SecureServerAccount = nex.NewAccount(types.NewPID(2), "Quazal Rendez-Vous", globals.KerberosPassword)
-
-	if strings.TrimSpace(aesKey) == "" {
-		globals.Logger.Error("PN_MHG_AES_KEY environment variable not set")
-		os.Exit(0)
-	} else {
-		globals.AESKey, err = hex.DecodeString(aesKey)
-		if err != nil {
-			globals.Logger.Criticalf("Failed to decode AES key: %v", err)
-			os.Exit(0)
-		}
-	}
+	globals.AuthenticationServerAccount = nex.NewAccount(types.NewPID(1), "Quazal Authentication", globals.KerberosPassword, false)
+	globals.SecureServerAccount = nex.NewAccount(types.NewPID(2), "Quazal Rendez-Vous", globals.KerberosPassword, false)
 
 	if strings.TrimSpace(authenticationServerPort) == "" {
 		globals.Logger.Error("PN_MHG_AUTHENTICATION_SERVER_PORT environment variable not set")
@@ -109,10 +91,11 @@ func init() {
 		os.Exit(0)
 	}
 
-	if port, err := strconv.Atoi(accountGRPCPort); err != nil {
+	accountPort, err := strconv.Atoi(accountGRPCPort)
+	if err != nil {
 		globals.Logger.Errorf("PN_MHG_ACCOUNT_GRPC_PORT is not a valid port. Expected 0-65535, got %s", accountGRPCPort)
 		os.Exit(0)
-	} else if port < 0 || port > 65535 {
+	} else if accountPort < 0 || accountPort > 65535 {
 		globals.Logger.Errorf("PN_MHG_ACCOUNT_GRPC_PORT is not a valid port. Expected 0-65535, got %s", accountGRPCPort)
 		os.Exit(0)
 	}
@@ -121,16 +104,7 @@ func init() {
 		globals.Logger.Warning("Insecure gRPC server detected. PN_MHG_ACCOUNT_GRPC_API_KEY environment variable not set")
 	}
 
-	globals.GRPCAccountClientConnection, err = grpc.Dial(fmt.Sprintf("%s:%s", accountGRPCHost, accountGRPCPort), grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		globals.Logger.Criticalf("Failed to connect to account gRPC server: %v", err)
-		os.Exit(0)
-	}
-
-	globals.GRPCAccountClient = pb_account.NewAccountClient(globals.GRPCAccountClientConnection)
-	globals.GRPCAccountCommonMetadata = metadata.Pairs(
-		"X-API-Key", accountGRPCAPIKey,
-	)
+	common_globals.ConnectToAccountGRPC(accountGRPCHost, uint16(accountPort), accountGRPCAPIKey)
 
 	database.ConnectPostgres()
 }

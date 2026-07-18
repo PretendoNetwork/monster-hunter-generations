@@ -42,7 +42,7 @@ Other tools and systems can also make use of this image, including Docker Compos
 To compile using Go, `go get` the required modules and then `go build` to your desired location. You may also want to tidy the go modules, though this is optional
 
 ```bash
-$ go get -u
+$ go get
 $ go mod tidy
 $ go build -o build/monster-hunter-generations
 ```
@@ -72,7 +72,6 @@ All configuration options are handled via environment variables
 | Name                                | Description                                                                                                        | Required                            |
 |-------------------------------------|--------------------------------------------------------------------------------------------------------------------|-------------------------------------|
 | `PN_MHG_POSTGRES_URI`               | Fully qualified URI to your Postgres server (Example `postgres://username:password@localhost/mhg?sslmode=disable`) | Yes                                 |
-| `PN_MHG_AES_KEY`                    | AES key used in tokens provided by the account server                                                              | Yes                                 |
 | `PN_MHG_AUTHENTICATION_SERVER_PORT` | Port for the authentication server                                                                                 | Yes                                 |
 | `PN_MHG_SECURE_SERVER_HOST`         | Host name for the secure server (should point to the same address as the authentication server)                    | Yes                                 |
 | `PN_MHG_SECURE_SERVER_PORT`         | Port for the secure server                                                                                         | Yes                                 |
