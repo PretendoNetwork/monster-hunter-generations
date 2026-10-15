@@ -116,28 +116,33 @@ func init() {
 	common_globals.ConnectToAccountGRPC(accountGRPCHost, uint16(accountPort), accountGRPCAPIKey)
 
 	if strings.TrimSpace(friendsGRPCHost) == "" {
-		globals.Logger.Error("PN_MH4U_FRIENDS_GRPC_HOST environment variable not set")
+		globals.Logger.Error("PN_MHG_FRIENDS_GRPC_HOST environment variable not set")
 		os.Exit(0)
 	}
+	
 	if strings.TrimSpace(friendsGRPCPort) == "" {
-		globals.Logger.Error("PN_MH4U_FRIENDS_GRPC_PORT environment variable not set")
+		globals.Logger.Error("PN_MHG_FRIENDS_GRPC_PORT environment variable not set")
 		os.Exit(0)
 	}
+	
 	if port, err := strconv.Atoi(friendsGRPCPort); err != nil {
-		globals.Logger.Errorf("PN_MH4U_FRIENDS_GRPC_PORT is not a valid port. Expected 0-65535, got %s", accountGRPCPort)
+		globals.Logger.Errorf("PN_MHG_FRIENDS_GRPC_PORT is not a valid port. Expected 0-65535, got %s", accountGRPCPort)
 		os.Exit(0)
 	} else if port < 0 || port > 65535 {
-		globals.Logger.Errorf("PN_MH4U_FRIENDS_GRPC_PORT is not a valid port. Expected 0-65535, got %s", accountGRPCPort)
+		globals.Logger.Errorf("PN_MHG_FRIENDS_GRPC_PORT is not a valid port. Expected 0-65535, got %s", accountGRPCPort)
 		os.Exit(0)
 	}
+	
 	if strings.TrimSpace(friendsGRPCAPIKey) == "" {
-		globals.Logger.Warning("Insecure gRPC server detected. PN_MH4U_FRIENDS_GRPC_API_KEY environment variable not set")
+		globals.Logger.Warning("Insecure gRPC server detected. PN_MHG_FRIENDS_GRPC_API_KEY environment variable not set")
 	}
+	
 	globals.GRPCFriendsClientConnection, err = grpc.Dial(fmt.Sprintf("%s:%s", friendsGRPCHost, friendsGRPCPort), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		globals.Logger.Criticalf("Failed to connect to friends gRPC server: %v", err)
 		os.Exit(0)
 	}
+	
 	globals.GRPCFriendsClient = pbfriends.NewFriendsClient(globals.GRPCFriendsClientConnection)
 	globals.GRPCFriendsCommonMetadata = metadata.Pairs(
 		"X-API-Key", friendsGRPCAPIKey,
